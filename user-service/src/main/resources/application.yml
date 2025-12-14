@@ -29,6 +29,10 @@ spring:
   liquibase:
     change-log: classpath:db/changelog-master.yml
 
+jwt:
+  secret: it_is_very_strong_secret_key_here_at_least_256_bits
+  expiration: 86400000                                    # 24 часа в миллисекундах
+
 logging:
   level:
     org.hibernate.SQL: DEBUG                              # Логировать SQL‑запросы
