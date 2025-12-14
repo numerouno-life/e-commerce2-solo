@@ -1,0 +1,35 @@
+server:
+  port: 8081                                              # Порт приложения
+
+spring:
+  # БД (PostgreSQL)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/e-commerce-db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  # JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update                                    # Автосоздание/обновление схемы БД
+    show-sql: true                                        # Логировать SQL‑запросы в консоль
+    properties:
+      hibernate:
+        format_sql: true                                  # Форматировать SQL для читаемости
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Redis
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 10000ms                                      # Таймаут подключения
+
+  # Liquibase
+  liquibase:
+    change-log: classpath:db/changelog-master.yml
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG                              # Логировать SQL‑запросы
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # Логировать параметры запросов

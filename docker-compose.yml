@@ -1,0 +1,62 @@
+services:
+  postgresql:
+    env_file:
+      - .env
+    image: postgres:16.1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: postgresql
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: redis-cli ping | grep PONG || exit 1
+      timeout: 5s
+      interval: 5s
+      retries: 3
+
+  user-service:
+    env_file:
+      - .env
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      user-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/postgresql
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f http://localhost:8081/actuator/health || exit 1
+      timeout: 10s
+      interval: 30s
+      retries: 3
+
+volumes:
+  postgres-data:
+  redis-data:
