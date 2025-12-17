@@ -1,16 +1,22 @@
 package com.ecommerce.service;
 
+import com.ecommerce.exceptions.InvalidCredentialsException;
 import com.ecommerce.exceptions.UserAlreadyExistsException;
 import com.ecommerce.mapper.UserMapper;
+import com.ecommerce.model.dto.request.UserLoginRequest;
 import com.ecommerce.model.dto.request.UserRegistrationRequest;
+import com.ecommerce.model.dto.response.AuthResponse;
 import com.ecommerce.model.dto.response.UserResponse;
 import com.ecommerce.model.entity.User;
 import com.ecommerce.repository.UserRepository;
+import com.ecommerce.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -19,6 +25,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     @Transactional
@@ -44,5 +51,24 @@ public class UserServiceImpl implements UserService {
         log.info("User registered successfully: {}", savedUser);
 
         return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AuthResponse authenticateUser(UserLoginRequest request) {
+        log.info("Аутентификация пользователя c login: {}", request.getLogin());
+        String login = request.getLogin();
+        Optional<User> userOpt = userRepository.findByEmail(login).or(() -> userRepository.findByUsername(login));
+
+        User user = userOpt
+                .orElseThrow(() -> new InvalidCredentialsException("Неверные учетные данные"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Неудачная попытка входа: неверный пароль для login '{}'", login);
+            throw new InvalidCredentialsException("Неверные учетные данные");
+        }
+
+        String token = jwtTokenProvider.generateToken(user);
+        return new AuthResponse(token, user.getId(), user.getUsername());
     }
 }

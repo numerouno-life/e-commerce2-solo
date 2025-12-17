@@ -7,7 +7,6 @@ import com.ecommerce.model.dto.response.UserResponse;
 import com.ecommerce.model.entity.User;
 import com.ecommerce.repository.UserRepository;
 import com.ecommerce.service.UserServiceImpl;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,7 +25,8 @@ public class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    private final UserMapper userMapper = new UserMapper();
+    @Mock
+    private UserMapper userMapper;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -34,18 +34,8 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    @BeforeEach
-    void setUp() {
-        userService = new UserServiceImpl(
-                userRepository,
-                passwordEncoder,
-                userMapper
-        );
-    }
-
     @Test
     void registerSuccess() {
-        // given
         UserRegistrationRequest request = new UserRegistrationRequest(
                 "testUser", "john.doe@example.com", "password123",
                 "John", "Doe", "1122334455"
@@ -58,8 +48,21 @@ public class UserServiceImplTest {
                 .password("encodedPassword")
                 .firstName("John")
                 .lastName("Doe")
+                .phoneNumber("1122334455")
                 .role(User.UserRole.USER)
                 .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        UserResponse expectedResponse = UserResponse.builder()
+                .id(1L)
+                .username("testUser")
+                .email("john.doe@example.com")
+                .firstName("John")
+                .lastName("Doe")
+                .phoneNumber("1122334455")
+                .role(User.UserRole.USER.toString())
+                .createdAt(savedUser.getCreatedAt())
                 .build();
 
         when(userRepository.existsByUsername("testUser")).thenReturn(false);
@@ -67,16 +70,21 @@ public class UserServiceImplTest {
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
+        when(userMapper.toDto(savedUser)).thenReturn(expectedResponse);
+
         UserResponse result = userService.registerUser(request);
 
         assertNotNull(result);
         assertEquals("testUser", result.getUsername());
         assertEquals("john.doe@example.com", result.getEmail());
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getLastName());
 
         verify(userRepository).existsByUsername("testUser");
         verify(userRepository).existsByEmail("john.doe@example.com");
         verify(passwordEncoder).encode("password123");
         verify(userRepository).save(any(User.class));
+        verify(userMapper).toDto(savedUser);
     }
 
     @Test
