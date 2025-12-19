@@ -48,8 +48,8 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         return Jwts.builder()
-                .subject(user.getUsername())
-                .claim("userId", user.getId())
+                .subject(user.getId().toString())
+                .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
                 .claim("firstName", user.getFirstName())
                 .claim("lastName", user.getLastName())
@@ -90,9 +90,9 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return claims.get("userId", Long.class);
+            return Long.parseLong(claims.getSubject());
         } catch (Exception ex) {
-            log.error("Не удалось извлечь userId из токена: {}", ex.getMessage());
+            log.warn("Не удалось извлечь userId из токена: {}", ex.getMessage());
             return null;
         }
     }
@@ -106,7 +106,7 @@ public class JwtTokenProvider {
                     .getPayload()
                     .getSubject();
         } catch (Exception ex) {
-            log.error("Не удалось извлечь username из токена: {}", ex.getMessage());
+            log.warn("Не удалось извлечь username из токена: {}", ex.getMessage());
             return null;
         }
     }
