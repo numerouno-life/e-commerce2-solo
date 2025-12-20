@@ -2,9 +2,11 @@ package com.ecommerce.service;
 
 import com.ecommerce.exceptions.InvalidCredentialsException;
 import com.ecommerce.exceptions.UserAlreadyExistsException;
+import com.ecommerce.exceptions.UserNotFoundException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.model.dto.request.UserLoginRequest;
 import com.ecommerce.model.dto.request.UserRegistrationRequest;
+import com.ecommerce.model.dto.request.UserUpdateRequest;
 import com.ecommerce.model.dto.response.AuthResponse;
 import com.ecommerce.model.dto.response.UserResponse;
 import com.ecommerce.model.entity.User;
@@ -70,5 +72,30 @@ public class UserServiceImpl implements UserService {
 
         String token = jwtTokenProvider.generateToken(user);
         return new AuthResponse(token, user.getId(), user.getUsername());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserProfile(Long userId) {
+        log.info("Получение профиля пользователя с ID: {}", userId);
+        User user = findUserById(userId);
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserProfile(Long userId, UserUpdateRequest request) {
+        log.info("Обновление профиля пользователя с ID: {}", userId);
+        User user = findUserById(userId);
+        userMapper.updateEntityFromDto(request, user);
+        User savedUser = userRepository.save(user);
+        UserResponse userResponse = userMapper.toDto(savedUser);
+        log.info("Профиль пользователя обновлен: {}", userResponse);
+        return userResponse;
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + userId + " не найден"));
     }
 }

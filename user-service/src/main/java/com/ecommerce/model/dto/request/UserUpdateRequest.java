@@ -3,12 +3,14 @@ package com.ecommerce.model.dto.request;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserUpdateRequest {
 
     @Size(max = 100, message = "Длина имени не может быть больше 100 символов")
