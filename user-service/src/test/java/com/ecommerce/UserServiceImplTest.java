@@ -2,9 +2,11 @@ package com.ecommerce;
 
 import com.ecommerce.exceptions.InvalidCredentialsException;
 import com.ecommerce.exceptions.UserAlreadyExistsException;
+import com.ecommerce.exceptions.UserNotFoundException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.model.dto.request.UserLoginRequest;
 import com.ecommerce.model.dto.request.UserRegistrationRequest;
+import com.ecommerce.model.dto.request.UserUpdateRequest;
 import com.ecommerce.model.dto.response.AuthResponse;
 import com.ecommerce.model.dto.response.UserResponse;
 import com.ecommerce.model.entity.User;
@@ -48,6 +50,8 @@ public class UserServiceImplTest {
     private UserLoginRequest validEmailRequest;
     private UserLoginRequest invalidPasswordRequest;
     private UserLoginRequest nonExistentUserRequest;
+    private UserUpdateRequest updateRequest;
+    private UserResponse userResponse;
 
     @BeforeEach
     void setUp() {
@@ -85,6 +89,24 @@ public class UserServiceImplTest {
         nonExistentUserRequest = UserLoginRequest.builder()
                 .login("nonexistent")
                 .password("anyPassword")
+                .build();
+
+        // Для обновления профиля
+        updateRequest = UserUpdateRequest.builder()
+                .firstName("Updated First")
+                .lastName("Updated Last")
+                .phoneNumber("9998887766")
+                .build();
+
+        userResponse = UserResponse.builder()
+                .id(1L)
+                .username("testuser")
+                .email("test@example.com")
+                .firstName("Updated First")
+                .lastName("Updated Last")
+                .phoneNumber("9998887766")
+                .role(User.UserRole.USER.toString())
+                .createdAt(testUser.getCreatedAt())
                 .build();
     }
 
@@ -346,4 +368,125 @@ public class UserServiceImplTest {
         verify(userRepository, times(1)).findByEmail("test@example.com");
         verify(userRepository, never()).findByUsername(anyString());
     }
+
+    @Test
+    void getUserProfile_Success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userMapper.toDto(testUser)).thenReturn(
+                UserResponse.builder()
+                        .id(1L)
+                        .username("testuser")
+                        .email("test@example.com")
+                        .firstName("Test")
+                        .lastName("User")
+                        .role("USER")
+                        .createdAt(testUser.getCreatedAt())
+                        .build()
+        );
+        UserResponse result = userService.getUserProfile(1L);
+
+        assertNotNull(result);
+        assertEquals("testuser", result.getUsername());
+        assertEquals("Test", result.getFirstName(), "First name should match");
+
+        verify(userRepository).findById(1L);
+        verify(userMapper).toDto(testUser);
+    }
+
+    @Test
+    void getUserProfile_NotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class, () -> userService.getUserProfile(999L));
+
+        verify(userRepository).findById(999L);
+        verify(userMapper, never()).toDto(any(User.class));
+    }
+
+    @Test
+    void updateUserProfile_Success() {
+        User updatedUser = testUser.toBuilder()
+                .firstName("Updated First")
+                .lastName("Updated Last")
+                .phoneNumber("9998887766")
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userMapper.toDto(updatedUser)).thenReturn(userResponse);
+        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+
+        UserResponse result = userService.updateUserProfile(1L, updateRequest);
+
+        assertNotNull(result);
+        assertEquals("Updated First", result.getFirstName());
+        assertEquals("9998887766", result.getPhoneNumber());
+
+        verify(userMapper).updateEntityFromDto(updateRequest, testUser);
+        verify(userRepository).save(testUser);
+        verify(userMapper).toDto(updatedUser);
+    }
+
+    @Test
+    void updateUserProfile_OnlyFirstNameUpdated() {
+        UserUpdateRequest partialRequest = UserUpdateRequest.builder()
+                .firstName("Only First Changed")
+                .build();
+
+        User updatedUser = testUser.toBuilder()
+                .firstName("Only First Changed")
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        UserResponse partialResponse = UserResponse.builder()
+                .id(1L)
+                .username("testuser")
+                .email("test@example.com")
+                .firstName("Only First Changed")
+                .lastName("User") // осталось прежним
+                .phoneNumber(testUser.getPhoneNumber())
+                .role("USER")
+                .createdAt(testUser.getCreatedAt())
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+        when(userMapper.toDto(updatedUser)).thenReturn(partialResponse);
+
+        UserResponse result = userService.updateUserProfile(1L, partialRequest);
+
+        assertEquals("Only First Changed", result.getFirstName());
+        assertEquals("User", result.getLastName()); // не изменилось
+
+        verify(userMapper).updateEntityFromDto(partialRequest, testUser);
+    }
+
+    @Test
+    void updateUserProfile_EmptyRequest_ShouldNotChangeUser() {
+        UserUpdateRequest emptyRequest = new UserUpdateRequest(null, null, null);
+
+        // Сущность не должна измениться
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userMapper.toDto(testUser)).thenReturn(
+                UserResponse.builder()
+                        .id(1L)
+                        .username("testuser")
+                        .email("test@example.com")
+                        .firstName("Test")
+                        .lastName("User")
+                        .role("USER")
+                        .createdAt(testUser.getCreatedAt())
+                        .build()
+        );
+
+        UserResponse result = userService.updateUserProfile(1L, emptyRequest);
+
+        assertEquals("Test", result.getFirstName());
+        assertEquals("User", result.getLastName());
+
+        verify(userMapper).updateEntityFromDto(emptyRequest, testUser);
+        verify(userRepository).save(testUser); // даже если без изменений — save вызывается
+    }
+
 }
