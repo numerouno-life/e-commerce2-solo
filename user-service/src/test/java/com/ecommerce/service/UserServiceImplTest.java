@@ -1,4 +1,4 @@
-package com.ecommerce;
+package com.ecommerce.service;
 
 import com.ecommerce.exceptions.InvalidCredentialsException;
 import com.ecommerce.exceptions.UserAlreadyExistsException;
@@ -12,7 +12,6 @@ import com.ecommerce.model.dto.response.UserResponse;
 import com.ecommerce.model.entity.User;
 import com.ecommerce.repository.UserRepository;
 import com.ecommerce.security.JwtTokenProvider;
-import com.ecommerce.service.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
