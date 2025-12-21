@@ -1,7 +1,6 @@
-package com.ecommerce;
+package com.ecommerce.security;
 
 import com.ecommerce.model.entity.User;
-import com.ecommerce.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
