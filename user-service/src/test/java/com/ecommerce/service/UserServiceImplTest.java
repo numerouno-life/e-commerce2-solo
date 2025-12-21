@@ -1,8 +1,8 @@
 package com.ecommerce.service;
 
-import com.ecommerce.exceptions.InvalidCredentialsException;
-import com.ecommerce.exceptions.UserAlreadyExistsException;
-import com.ecommerce.exceptions.UserNotFoundException;
+import com.ecommerce.exception.custom_exceptions.InvalidCredentialsException;
+import com.ecommerce.exception.custom_exceptions.UserAlreadyExistsException;
+import com.ecommerce.exception.custom_exceptions.UserNotFoundException;
 import com.ecommerce.mapper.UserMapper;
 import com.ecommerce.model.dto.request.UserLoginRequest;
 import com.ecommerce.model.dto.request.UserRegistrationRequest;
