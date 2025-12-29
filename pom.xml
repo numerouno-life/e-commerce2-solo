@@ -13,12 +13,14 @@
     </parent>
 
     <groupId>com.ecommerce</groupId>
-    <artifactId>backend</artifactId>
+    <artifactId>ecommerce-backend</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
-    <name>user-service</name>
+    <name>ecommerce-backend</name>
+
     <modules>
         <module>user-service</module>
+        <module>product-service</module>
     </modules>
 
     <properties>

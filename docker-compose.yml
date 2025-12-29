@@ -1,14 +1,36 @@
+version: '3.8'
+
 services:
-  postgresql:
+  postgresql-user:
     env_file:
       - .env
     image: postgres:16.1
+    container_name: postgres-user-db
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data/
+      - postgres-user-data:/var/lib/postgresql/data/
     environment:
-      POSTGRES_DB: postgresql
+      POSTGRES_DB: user_db
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  postgresql-product:
+    env_file:
+      - .env
+    image: postgres:16.1
+    container_name: postgres-product-db
+    ports:
+      - "5433:5432"  # Изменен порт на 5433 для локального доступа
+    volumes:
+      - postgres-product-data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: product_db
       POSTGRES_USER: ${POSTGRES_USERNAME}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
@@ -40,12 +62,12 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      user-db:
+      postgresql-user:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/postgresql
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-user:5432/user_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_REDIS_HOST: redis
@@ -57,6 +79,34 @@ services:
       interval: 30s
       retries: 3
 
+  product-service:
+    env_file:
+      - .env
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgresql-product:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-product:5432/product_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f http://localhost:8082/actuator/health || exit 1
+      timeout: 10s
+      interval: 30s
+      retries: 3
+
 volumes:
-  postgres-data:
+  postgres-user-data:
+  postgres-product-data:
   redis-data:
