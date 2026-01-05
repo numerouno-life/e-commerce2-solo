@@ -1,13 +1,14 @@
-package com.ecommerce.model.entity;
+package com.ecommerce.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "products")
 @ToString
 @Getter
 @Setter
@@ -15,44 +16,39 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
-public class User {
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false, unique = true)
-    String username;
+    @Column(name = "name", nullable = false)
+    String name;
 
-    @Column(nullable = false, unique = true)
-    String email;
+    @Column(name = "description")
+    String description;
 
-    @Column(nullable = false)
-    String password;
+    @Column(name = "price", nullable = false)
+    BigDecimal price;
 
-    @Column(name = "first_name")
-    String firstName;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    Category category;
 
-    @Column(name = "last_name")
-    String lastName;
+    @Column(name = "brand")
+    String brand;
 
-    @Column(name = "phone_number")
-    String phoneNumber;
+    @Column(name = "stock_quantity")
+    Integer stockQuantity = 0;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    UserRole role = UserRole.USER;
+    @Column(name = "image_url")
+    String imageUrl;
 
     @Column(name = "created_at")
     LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
-
-    public enum UserRole {
-        USER,
-        ADMIN
-    }
 
     @PrePersist
     protected void onCreate() {
@@ -65,4 +61,5 @@ public class User {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
 }

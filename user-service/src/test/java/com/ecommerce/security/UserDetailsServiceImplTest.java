@@ -1,6 +1,5 @@
 package com.ecommerce.security;
 
-import com.ecommerce.exception.custom_exceptions.UserNotFoundException;
 import com.ecommerce.model.entity.User;
 import com.ecommerce.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
