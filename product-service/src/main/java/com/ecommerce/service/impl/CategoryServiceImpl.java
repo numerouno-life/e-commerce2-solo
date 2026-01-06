@@ -1,12 +1,14 @@
 package com.ecommerce.service.impl;
 
 import com.ecommerce.exception.CategoryAlreadyExistsException;
+import com.ecommerce.exception.CategoryHasProductsException;
 import com.ecommerce.exception.CategoryNotFoundException;
 import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.model.dto.CategoryRequest;
 import com.ecommerce.model.dto.CategoryResponse;
 import com.ecommerce.model.entity.Category;
 import com.ecommerce.repository.CategoryRepository;
+import com.ecommerce.repository.ProductRepository;
 import com.ecommerce.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final CategoryMapper categoryMapper;
     private final Clock clock;
 
@@ -77,7 +80,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Long id) {
-
+        Category category = findCategoryById(id);
+        if (productRepository.existsByCategoryId(id)) {
+            throw new CategoryHasProductsException("Категория с ID " + id + " не может быть удалена," +
+                    " так как она содержит товары");
+        }
+        log.info("Удаление категории: ID={}, название={}", id, category.getName());
+        categoryRepository.delete(category);
     }
 
     private Category findCategoryById(Long id) {
