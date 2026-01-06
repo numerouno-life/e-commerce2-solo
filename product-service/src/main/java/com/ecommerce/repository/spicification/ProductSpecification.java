@@ -1,6 +1,6 @@
 package com.ecommerce.repository.spicification;
 
-import com.ecommerce.model.Product;
+import com.ecommerce.model.entity.Product;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;

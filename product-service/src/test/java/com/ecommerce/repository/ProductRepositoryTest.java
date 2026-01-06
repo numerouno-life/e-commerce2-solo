@@ -1,7 +1,7 @@
 package com.ecommerce.repository;
 
-import com.ecommerce.model.Category;
-import com.ecommerce.model.Product;
+import com.ecommerce.model.entity.Category;
+import com.ecommerce.model.entity.Product;
 import com.ecommerce.repository.spicification.ProductSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
