@@ -1,6 +1,6 @@
 package com.ecommerce.repository;
 
-import com.ecommerce.model.Category;
+import com.ecommerce.model.entity.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
