@@ -1,6 +1,7 @@
 package com.ecommerce.service.impl;
 
 import com.ecommerce.exception.CategoryAlreadyExistsException;
+import com.ecommerce.exception.CategoryNotFoundException;
 import com.ecommerce.mapper.CategoryMapper;
 import com.ecommerce.model.dto.CategoryRequest;
 import com.ecommerce.model.dto.CategoryResponse;
@@ -45,7 +46,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
-        return null;
+        Category category = findCategoryById(id);
+        return categoryMapper.toResponse(category);
     }
 
     @Override
@@ -64,5 +66,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void deleteCategory(Long id) {
 
+    }
+
+    private Category findCategoryById(Long id) {
+        return categoryRepository.findById(id).orElseThrow(() ->
+                new CategoryNotFoundException("Категория с ID " + id + " не найдена"));
     }
 }
