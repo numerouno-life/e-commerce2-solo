@@ -3,17 +3,17 @@ package com.ecommerce.mapper;
 import com.ecommerce.model.dto.CategoryRequest;
 import com.ecommerce.model.dto.CategoryResponse;
 import com.ecommerce.model.entity.Category;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+        nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 public interface CategoryMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    Category toEntity(CategoryResponse response);
+    Category toEntity(CategoryRequest request);
 
     CategoryResponse toResponse(Category category);
 
