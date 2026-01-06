@@ -61,7 +61,17 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
-        return null;
+        Category category = findCategoryById(id);
+        log.info("Обновление категории: {}", category.getName());
+        if (!category.getName().equals(request.getName()) && categoryRepository.existsByName(request.getName())) {
+            throw new CategoryAlreadyExistsException("Категория с именем " + request.getName() + " уже существует");
+        }
+
+        categoryMapper.updateEntity(category, request);
+        category.setUpdatedAt(LocalDateTime.now(clock));
+        CategoryResponse updatedCategory = categoryMapper.toResponse(category);
+        log.info("Категория обновлена: {}", updatedCategory.getName());
+        return updatedCategory;
     }
 
     @Override
