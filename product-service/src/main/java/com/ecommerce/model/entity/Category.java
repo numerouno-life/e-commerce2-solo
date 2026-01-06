@@ -32,15 +32,4 @@ public class Category {
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void prePersist() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    protected void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
