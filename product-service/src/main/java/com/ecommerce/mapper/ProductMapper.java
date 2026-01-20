@@ -20,6 +20,9 @@ public interface ProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductRequest request);
 
+    @Mapping(source = "category.name", target = "categoryName")
+    ProductResponse toProductResponse(Product product);
+
     List<ProductResponse> toResponseList(List<Product> products);
 
     default ProductListResponse toProductListResponseList(Page<Product> productPage) {
