@@ -2,6 +2,8 @@ package com.ecommerce.service.impl;
 
 import com.ecommerce.exception.ProductNotFoundException;
 import com.ecommerce.mapper.ProductMapper;
+import com.ecommerce.model.dto.ProductFilterRequest;
+import com.ecommerce.model.dto.ProductListResponse;
 import com.ecommerce.model.dto.ProductRequest;
 import com.ecommerce.model.dto.ProductResponse;
 import com.ecommerce.model.entity.Product;
@@ -10,6 +12,10 @@ import com.ecommerce.service.CategoryService;
 import com.ecommerce.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +76,39 @@ public class ProductServiceImpl implements ProductService {
         log.info("Удаление продукта с id {}", id);
         productRepository.delete(product);
         log.info("Продукт с id {} был удален", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductListResponse getAllProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<Product> products = productRepository.findAll(pageable);
+        return productMapper.toProductListResponseList(products);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProductListResponse searchProducts(ProductFilterRequest filter, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+
+        String pattern = filter.getSearchQuery() != null
+                ? "%" + filter.getSearchQuery().trim() + "%"
+                : null;
+
+        String brandPattern = filter.getBrand() != null
+                ? "%" + filter.getBrand().trim() + "%"
+                : null;
+
+        Page<Product> byFilter = productRepository.findByFilters(
+                pattern,
+                filter.getCategoryId(),
+                filter.getMinPrice(),
+                filter.getMaxPrice(),
+                brandPattern,
+                pageable
+        );
+
+        return productMapper.toProductListResponseList(byFilter);
     }
 
     private void findCategoryById(Long id) {
