@@ -4,7 +4,6 @@ target/
 !**/src/test/**/target/
 
 ### IntelliJ IDEA ###
-e-commerce2/.idea
 .idea
 .idea/modules.xml
 .idea/jarRepositories.xml
