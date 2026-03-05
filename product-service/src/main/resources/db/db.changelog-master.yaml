@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: scripts/create-products-categories.yaml
+      relativeToChangelogFile: true

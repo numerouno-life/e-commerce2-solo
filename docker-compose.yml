@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  postgresql-user:
+    env_file:
+      - .env
+    image: postgres:16.1
+    container_name: postgres-user-db2
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  postgresql-product:
+    env_file:
+      - .env
+    image: postgres:16.1
+    container_name: postgres-product-db2
+    ports:
+      - "5433:5432"  # Изменен порт на 5433 для локального доступа
+    volumes:
+      - postgres-product-data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: product_db
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: redis-cache2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: redis-cli ping | grep PONG || exit 1
+      timeout: 5s
+      interval: 5s
+      retries: 3
+
+  user-service:
+    env_file:
+      - .env
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service2
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgresql-user:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-user:5432/user_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f http://localhost:8081/actuator/health || exit 1
+      timeout: 10s
+      interval: 30s
+      retries: 3
+
+  product-service:
+    env_file:
+      - .env
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service2
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgresql-product:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-product:5432/product_db
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+    restart: unless-stopped
+    healthcheck:
+      test: curl -f http://localhost:8082/actuator/health || exit 1
+      timeout: 10s
+      interval: 30s
+      retries: 3
+
+volumes:
+  postgres-user-data:
+  postgres-product-data:
+  redis-data:
